@@ -1,6 +1,6 @@
 ---
 name: meow-push
-description: 通过 MeoW 把通知推送到鸿蒙（HarmonyOS）手机，基于 https://api.chuckfang.com 的 HTTP 接口，默认 POST + JSON。支持标题、跳转链接、图标、自定义分类、HTML 正文，内置本地频率限制与错误码映射。触发场景：用户说「发个推送」「推送到我手机」「通知我」「MeoW 推送」「任务跑完提醒我」「告警推手机」等。
+description: 通过 MeoW 向鸿蒙手机推送纯文本或 HTML 通知。触发词：发个推送、推送到手机、通知我、MeoW 推送、任务完成提醒。
 agent_created: true
 ---
 

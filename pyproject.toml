@@ -9,7 +9,7 @@ description = "Push notifications to a HarmonyOS phone through MeoW (zero depend
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
-authors = [{ name = "Vinlyx" }]
+authors = [{ name = "Vincent Li" }]
 keywords = ["meow", "harmonyos", "notification", "push", "bark"]
 classifiers = [
     "Programming Language :: Python :: 3",
