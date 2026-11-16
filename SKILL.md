@@ -17,15 +17,17 @@ agent_created: true
 
 昵称只在**首次使用**时向用户询问一次，保存进 config，之后不再问。**不要**把昵称写进代码或仓库里的任何文件。
 
+> 下文统一写 `meowpush`；未安装时替换成 `<仓库根目录>/bin/meowpush`。
+
 ```bash
-python3 -m meow_push config show        # nickname 为空 → 未配置
+meowpush config show        # nickname 为空 → 未配置
 ```
 
 - 已配置：直接进入发送。
 - 未配置：向用户确认昵称，然后写入：
 
 ```bash
-python3 -m meow_push config set <昵称>
+meowpush config set <昵称>
 ```
 
 告诉用户：昵称就是专属推送链接 `https://api.chuckfang.com/<昵称>/` 里的那一段，不能含斜杠。配置落在 `~/.config/meow-push/config.json`（Windows 为 `%APPDATA%\meow-push\config.json`），在仓库之外，不会被提交。
@@ -34,18 +36,20 @@ python3 -m meow_push config set <昵称>
 
 ## 发送
 
-在仓库根目录执行（未 `pip install -e .` 时用模块方式）：
+三种等价入口，按可用性择一：
+
+1. `meowpush` —— 已 `pip install -e .` 时，任意目录可用
+2. `<仓库根目录>/bin/meowpush` —— 未安装时，任意目录可用（脚本会自行处理 `PYTHONPATH`）
+3. `python3 -m meow_push` —— 需先 `cd` 到仓库根目录
 
 ```bash
-python3 -m meow_push send "构建完成，用时 3m12s" -t CI -c 告警
-python3 -m meow_push send "发布成功" -u https://example.com/release/1
-python3 -m meow_push send "<b>完成</b>，耗时 3m12s" --html --html-height 300
-echo "最后 20 行日志" | python3 -m meow_push send --stdin -t 服务器
-python3 -m meow_push send "hi" --dry-run     # 只打印请求，不发送
-python3 -m meow_push send "hi" --json        # 机器可读输出
+meowpush send "构建完成，用时 3m12s" -t CI -c 告警
+meowpush send "发布成功" -u https://example.com/release/1
+meowpush send "<b>完成</b>，耗时 3m12s" --html --html-height 300
+echo "最后 20 行日志" | meowpush send --stdin -t 服务器
+meowpush send "hi" --dry-run     # 只打印请求，不发送
+meowpush send "hi" --json        # 机器可读输出
 ```
-
-已 `pip install -e .` 时把 `python3 -m meow_push` 换成 `meowpush` 即可。
 
 | 参数 | 说明 |
 | --- | --- |

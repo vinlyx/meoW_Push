@@ -12,10 +12,13 @@
 # 方式一：可编辑安装（推荐，获得 meowpush 命令）
 pip install -e .
 
-# 方式二：不安装，直接用模块方式运行
+# 方式二：不安装，用自带启动脚本（任意目录可用）
+/path/to/meowMsg/bin/meowpush send "hello"
+
+# 方式三：不安装，在仓库根目录用模块方式运行
 python3 -m meow_push send "hello"
 
-# 方式三：把 meow_push/ 目录整个拷进你的项目，直接 import
+# 方式四：把 meow_push/ 目录整个拷进你的项目，直接 import
 ```
 
 要求 Python ≥ 3.8，仅使用标准库（`urllib` / `json` / `argparse`）。

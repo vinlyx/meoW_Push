@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Run meow-push from any working directory, without installing the package.
+#
+#   /path/to/meowMsg/bin/meowpush send "hello" -t CI
+#
+# Windows 下请用：python -m meow_push ...（或在仓库根目录 pip install -e . 后直接用 meowpush）
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -n "${PYTHONPATH:-}" ]; then
+  export PYTHONPATH="${repo_dir}:${PYTHONPATH}"
+else
+  export PYTHONPATH="${repo_dir}"
+fi
+
+exec "${MEOW_PYTHON:-python3}" -m meow_push "$@"
