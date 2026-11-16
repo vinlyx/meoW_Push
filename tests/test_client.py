@@ -91,10 +91,6 @@ class SendRequestTests(unittest.TestCase):
         self.assertEqual(request["json"]["title"], "t")
 
 
-def server_request_url(result: object) -> str:
-    return result.request["url"]  # type: ignore[attr-defined]
-
-
 class ErrorMappingTests(unittest.TestCase):
     def test_business_404_maps_to_not_found(self) -> None:
         with MockMeoW(response={"status": 404, "data": False, "msg": "昵称未注册"}) as server:

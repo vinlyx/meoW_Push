@@ -20,6 +20,20 @@ python3 -m meow_push send "hello"
 
 要求 Python ≥ 3.8，仅使用标准库（`urllib` / `json` / `argparse`）。
 
+## 作为 WorkBuddy Skill 使用
+
+仓库自带 `SKILL.md`，放进 WorkBuddy 的 skills 目录即可被「发个推送」「通知我」这类说法命中。目录名建议用 `meow-push`，与 `SKILL.md` 的 `name` 保持一致：
+
+```bash
+# Linux / WSL / macOS
+ln -s "$PWD" ~/.workbuddy/skills/meow-push
+
+# Windows（管理员 PowerShell）
+# New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.workbuddy\skills\meow-push" -Target "D:\path\to\meowMsg"
+```
+
+Skill 被调用时会先执行 `config show` 判断昵称是否已配置，未配置则询问用户一次。
+
 ## 首次配置
 
 昵称就是专属推送链接 `https://api.chuckfang.com/<昵称>/` 里的那一段，**不能含斜杠**。
