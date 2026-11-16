@@ -23,7 +23,7 @@ python3 -m meow_push send "hello"
 # 方式四：把 meow_push/ 目录整个拷进你的项目，直接 import
 ```
 
-要求 Python ≥ 3.8，仅使用标准库（`urllib` / `json` / `argparse`）。
+要求 Python ≥ 3.12（CI 覆盖 3.12 / 3.13 / 3.14），仅使用标准库（`urllib` / `json` / `argparse`）。
 
 ## 作为 WorkBuddy Skill 使用
 
