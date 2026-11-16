@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run meow-push from any working directory, without installing the package.
 #
-#   /path/to/meowMsg/bin/meowpush send "hello" -t CI
+#   /path/to/meoW_Push/bin/meowpush send "hello" -t CI
 #
 # Windows 下请用：python -m meow_push ...（或在仓库根目录 pip install -e . 后直接用 meowpush）
 set -euo pipefail

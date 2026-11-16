@@ -29,7 +29,7 @@ class CliTests(unittest.TestCase):
         self.tmp = Path(self._tmp.name)
 
     def _write_config(self, server, **overrides):
-        config = Config(nickname="Vinlyx", base_url=server.base_url, **overrides)
+        config = Config(nickname="testuser", base_url=server.base_url, **overrides)
         return config.save(self.tmp / "config.json")
 
     def test_send_human_output(self) -> None:
@@ -53,7 +53,7 @@ class CliTests(unittest.TestCase):
             payload = json.loads(output)
             self.assertTrue(payload["ok"])
             self.assertEqual(payload["status"], 200)
-            self.assertEqual(payload["nickname"], "Vinlyx")
+            self.assertEqual(payload["nickname"], "testuser")
 
     def test_global_option_after_subcommand(self) -> None:
         with MockMeoW() as server:
@@ -123,12 +123,12 @@ class CliTests(unittest.TestCase):
 
     def test_config_set_and_show(self) -> None:
         path = self.tmp / "cfg.json"
-        code, _ = run_cli(["--config", str(path), "config", "set", "Vinlyx"])
+        code, _ = run_cli(["--config", str(path), "config", "set", "testuser"])
         self.assertEqual(code, 0)
         code, output = run_cli(["--config", str(path), "config", "show"])
         self.assertEqual(code, 0)
         payload = json.loads(output)
-        self.assertEqual(payload["nickname"], "Vinlyx")
+        self.assertEqual(payload["nickname"], "testuser")
         self.assertEqual(payload["config_path"], str(path))
 
     def test_config_path(self) -> None:

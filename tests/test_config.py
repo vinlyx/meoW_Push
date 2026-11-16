@@ -28,11 +28,11 @@ class ConfigTests(unittest.TestCase):
     def test_roundtrip_and_permissions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "meow-push" / "config.json"
-            saved = Config(nickname="Vinlyx", default_category="构建").save(path)
+            saved = Config(nickname="testuser", default_category="构建").save(path)
             self.assertTrue(saved.exists())
-            self.assertEqual(json.loads(saved.read_text(encoding="utf-8"))["nickname"], "Vinlyx")
+            self.assertEqual(json.loads(saved.read_text(encoding="utf-8"))["nickname"], "testuser")
             loaded = Config.load(path)
-            self.assertEqual(loaded.nickname, "Vinlyx")
+            self.assertEqual(loaded.nickname, "testuser")
             self.assertEqual(loaded.default_category, "构建")
             if os.name != "nt":
                 self.assertEqual(saved.stat().st_mode & 0o777, 0o600)
@@ -98,11 +98,11 @@ class ConfigTests(unittest.TestCase):
             config = Config.load(path)
             nickname = config.ensure_nickname(
                 prompt=True,
-                input_fn=lambda _prompt="": "Vinlyx",
+                input_fn=lambda _prompt="": "testuser",
                 print_fn=lambda *_a, **_k: None,
             )
-            self.assertEqual(nickname, "Vinlyx")
-            self.assertEqual(Config.load(path).nickname, "Vinlyx")
+            self.assertEqual(nickname, "testuser")
+            self.assertEqual(Config.load(path).nickname, "testuser")
 
     def test_ensure_nickname_without_prompt_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -113,9 +113,9 @@ class ConfigTests(unittest.TestCase):
 
     def test_ensure_nickname_uses_existing_value(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            config = Config(nickname="Vinlyx")
+            config = Config(nickname="testuser")
             self.assertEqual(
-                config.ensure_nickname(prompt=False, print_fn=lambda *_a: None), "Vinlyx"
+                config.ensure_nickname(prompt=False, print_fn=lambda *_a: None), "testuser"
             )
 
 

@@ -92,7 +92,7 @@ from meow_push import send, MeoWClient, MeoWAPIError
 
 send("构建完成", title="CI", category="告警")
 
-client = MeoWClient("Vinlyx", timeout=5, retries=3)   # 不依赖配置文件
+client = MeoWClient("your-nickname", timeout=5, retries=3)   # 不依赖配置文件
 client.send("<b>完成</b>", msg_type="html", html_height=280)
 ```
 

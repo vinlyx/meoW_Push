@@ -22,7 +22,7 @@ from tests.support import MockMeoW
 class SendRequestTests(unittest.TestCase):
     def test_posts_json_to_nickname_endpoint(self) -> None:
         with MockMeoW() as server:
-            client = MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False)
+            client = MeoWClient("testuser", base_url=server.base_url, rate_limit=False)
             result = client.send(
                 "构建完成",
                 title="CI",
@@ -32,13 +32,13 @@ class SendRequestTests(unittest.TestCase):
             )
             self.assertTrue(result.ok)
             self.assertEqual(result.status, 200)
-            self.assertEqual(result.nickname, "Vinlyx")
+            self.assertEqual(result.nickname, "testuser")
             self.assertEqual(result.message, "发送成功")
 
             request = server.requests[0]
             self.assertEqual(request["method"], "POST")
             parts = urllib.parse.urlsplit(request["path"])
-            self.assertEqual(parts.path, "/Vinlyx")
+            self.assertEqual(parts.path, "/testuser")
             query = urllib.parse.parse_qs(parts.query)
             self.assertEqual(query["msgType"], ["text"])
             self.assertNotIn("htmlHeight", query)
@@ -53,7 +53,7 @@ class SendRequestTests(unittest.TestCase):
 
     def test_html_mode_keeps_body_unencoded(self) -> None:
         with MockMeoW() as server:
-            client = MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False)
+            client = MeoWClient("testuser", base_url=server.base_url, rate_limit=False)
             html = "<p><b>欢迎</b>，这是 <i>HTML</i></p>"
             client.send(html, title="系统", msg_type="html", html_height=350)
 
@@ -67,25 +67,25 @@ class SendRequestTests(unittest.TestCase):
 
     def test_nickname_is_percent_encoded_in_path(self) -> None:
         with MockMeoW() as server:
-            MeoWClient("Vinlyx 测试", base_url=server.base_url, rate_limit=False).send("hi")
+            MeoWClient("testuser 测试", base_url=server.base_url, rate_limit=False).send("hi")
             path = urllib.parse.urlsplit(server.requests[0]["path"]).path
-            self.assertEqual(urllib.parse.unquote(path), "/Vinlyx 测试")
+            self.assertEqual(urllib.parse.unquote(path), "/testuser 测试")
 
     def test_optional_fields_are_omitted(self) -> None:
         with MockMeoW() as server:
-            MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False).send("hi")
+            MeoWClient("testuser", base_url=server.base_url, rate_limit=False).send("hi")
             body = json.loads(server.requests[0]["body"].decode("utf-8"))
             self.assertEqual(body, {"msg": "hi"})
 
     def test_dry_run_skips_network(self) -> None:
-        client = MeoWClient("Vinlyx", base_url="http://127.0.0.1:1", rate_limit=False)
+        client = MeoWClient("testuser", base_url="http://127.0.0.1:1", rate_limit=False)
         result = client.send("hi", dry_run=True, category="测试")
         self.assertEqual(result.status, 0)
-        self.assertEqual(result.request["url"], "http://127.0.0.1:1/Vinlyx?msgType=text")
+        self.assertEqual(result.request["url"], "http://127.0.0.1:1/testuser?msgType=text")
         self.assertEqual(result.request["json"]["category"], "测试")
 
     def test_build_request_matches_send(self) -> None:
-        client = MeoWClient("Vinlyx", base_url="http://127.0.0.1:1", rate_limit=False)
+        client = MeoWClient("testuser", base_url="http://127.0.0.1:1", rate_limit=False)
         request = client.build_request("hi", title="t", msg_type="html", html_height=200)
         self.assertEqual(request["method"], "POST")
         self.assertIn("htmlHeight=200", request["url"])
@@ -94,7 +94,7 @@ class SendRequestTests(unittest.TestCase):
 
 class HtmlStylingTests(unittest.TestCase):
     def _client(self, server, **kwargs):
-        return MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False, **kwargs)
+        return MeoWClient("testuser", base_url=server.base_url, rate_limit=False, **kwargs)
 
     def test_default_wrap_sets_large_font_width_and_height(self) -> None:
         with MockMeoW() as server:
@@ -163,13 +163,13 @@ class HtmlStylingTests(unittest.TestCase):
             self.assertEqual(body["msg"], "<b>x</b>")
 
     def test_font_size_is_bounded(self) -> None:
-        client = MeoWClient("Vinlyx", rate_limit=False)
+        client = MeoWClient("testuser", rate_limit=False)
         for size in (4, 400):
             with self.assertRaises(MeoWValidationError):
                 client.send("x", msg_type="html", html_font_size=size)
 
     def test_width_is_bounded(self) -> None:
-        client = MeoWClient("Vinlyx", rate_limit=False)
+        client = MeoWClient("testuser", rate_limit=False)
         for width in (100, 5000):
             with self.assertRaises(MeoWValidationError):
                 client.send("x", msg_type="html", html_width=width)
@@ -187,7 +187,7 @@ class ErrorMappingTests(unittest.TestCase):
 
     def test_business_403_maps_to_api_error(self) -> None:
         with MockMeoW(response={"status": 403, "data": False, "msg": "内容策略禁止发送"}) as server:
-            client = MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False, retries=0)
+            client = MeoWClient("testuser", base_url=server.base_url, rate_limit=False, retries=0)
             with self.assertRaises(MeoWAPIError) as ctx:
                 client.send("hi")
             self.assertEqual(ctx.exception.status, 403)
@@ -195,7 +195,7 @@ class ErrorMappingTests(unittest.TestCase):
     def test_rate_limited_is_retried_then_raised(self) -> None:
         with MockMeoW(response={"status": 429, "data": False, "msg": "频率超限"}) as server:
             client = MeoWClient(
-                "Vinlyx",
+                "testuser",
                 base_url=server.base_url,
                 rate_limit=False,
                 retries=1,
@@ -208,7 +208,7 @@ class ErrorMappingTests(unittest.TestCase):
     def test_server_error_is_retried(self) -> None:
         with MockMeoW(response={"status": 500, "data": False, "msg": "boom"}) as server:
             client = MeoWClient(
-                "Vinlyx",
+                "testuser",
                 base_url=server.base_url,
                 rate_limit=False,
                 retries=2,
@@ -221,7 +221,7 @@ class ErrorMappingTests(unittest.TestCase):
     def test_bad_request_is_not_retried(self) -> None:
         with MockMeoW(response={"status": 400, "data": False, "msg": "分类名不能超过10个字"}) as server:
             client = MeoWClient(
-                "Vinlyx",
+                "testuser",
                 base_url=server.base_url,
                 rate_limit=False,
                 retries=2,
@@ -233,7 +233,7 @@ class ErrorMappingTests(unittest.TestCase):
 
     def test_non_json_response_surfaces_http_status(self) -> None:
         with MockMeoW(raw=b"<html>bad gateway</html>", status=502) as server:
-            client = MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False, retries=0)
+            client = MeoWClient("testuser", base_url=server.base_url, rate_limit=False, retries=0)
             with self.assertRaises(MeoWAPIError) as ctx:
                 client.send("hi")
             self.assertIn("502", str(ctx.exception))
@@ -241,14 +241,14 @@ class ErrorMappingTests(unittest.TestCase):
 
     def test_response_missing_status(self) -> None:
         with MockMeoW(response={"data": True}) as server:
-            client = MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False)
+            client = MeoWClient("testuser", base_url=server.base_url, rate_limit=False)
             with self.assertRaises(MeoWAPIError) as ctx:
                 client.send("hi")
             self.assertIn("status", str(ctx.exception))
 
     def test_network_error(self) -> None:
         client = MeoWClient(
-            "Vinlyx", base_url="http://127.0.0.1:1", timeout=1.0, retries=0, rate_limit=False
+            "testuser", base_url="http://127.0.0.1:1", timeout=1.0, retries=0, rate_limit=False
         )
         with self.assertRaises(MeoWNetworkError):
             client.send("hi")
@@ -256,7 +256,7 @@ class ErrorMappingTests(unittest.TestCase):
 
 class ValidationTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = MeoWClient("Vinlyx", base_url="http://127.0.0.1:1", rate_limit=False)
+        self.client = MeoWClient("testuser", base_url="http://127.0.0.1:1", rate_limit=False)
 
     def test_blank_message_is_rejected(self) -> None:
         with self.assertRaises(MeoWValidationError):
@@ -332,7 +332,7 @@ class RateLimiterTests(unittest.TestCase):
 
     def test_client_does_not_rate_limit_by_default(self) -> None:
         with MockMeoW() as server:
-            client = MeoWClient("Vinlyx", base_url=server.base_url)
+            client = MeoWClient("testuser", base_url=server.base_url)
             client.send("第一条")
             client.send("第二条")  # 会员账号无配额，默认不做本地限流
             self.assertEqual(len(server.requests), 2)

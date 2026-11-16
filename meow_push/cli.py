@@ -54,7 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  meowpush send \"构建完成\" -t CI -c 告警\n"
             "  meowpush send \"<b>完成</b>\" --html --html-height 300 -u https://example.com\n"
             "  echo \"日志尾部\" | meowpush send --stdin -t 服务器\n"
-            "  meowpush config set Vinlyx\n"
+            "  meowpush config set <昵称>\n"
             "  meowpush test\n"
         ),
     )

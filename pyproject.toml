@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vinlyx/meowMsg"
+Homepage = "https://github.com/vinlyx/meoW_Push"
 
 [project.scripts]
 meowpush = "meow_push.cli:main"

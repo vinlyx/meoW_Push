@@ -13,7 +13,7 @@
 pip install -e .
 
 # 方式二：不安装，用自带启动脚本（任意目录可用）
-/path/to/meowMsg/bin/meowpush send "hello"
+/path/to/meoW_Push/bin/meowpush send "hello"
 
 # 方式三：不安装，在仓库根目录用模块方式运行
 python3 -m meow_push send "hello"
@@ -32,7 +32,7 @@ python3 -m meow_push send "hello"
 ln -s "$PWD" ~/.workbuddy/skills/meow-push
 
 # Windows（管理员 PowerShell）
-# New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.workbuddy\skills\meow-push" -Target "D:\path\to\meowMsg"
+# New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.workbuddy\skills\meow-push" -Target "D:\path\to\meoW_Push"
 ```
 
 Skill 被调用时会先执行 `config show` 判断昵称是否已配置，未配置则询问用户一次。
@@ -42,7 +42,7 @@ Skill 被调用时会先执行 `config show` 判断昵称是否已配置，未�
 昵称就是专属推送链接 `https://api.chuckfang.com/<昵称>/` 里的那一段，**不能含斜杠**。
 
 ```bash
-meowpush config set Vinlyx      # 显式写入
+meowpush config set your-nickname      # 显式写入
 meowpush send "hello"           # 未配置时会在终端里询问昵称并保存
 meowpush config show            # 查看当前配置与来源路径
 ```
@@ -139,7 +139,7 @@ meowpush send "..." --html --no-html-wrap              # 完全关闭包装
 想长期固定，写进配置即可：
 
 ```bash
-meowpush config set Vinlyx    # 保留昵称
+meowpush config set your-nickname    # 保留昵称
 # 再编辑 ~/.config/meow-push/config.json： "html_font_size": 40, "html_width": 820
 ```
 
@@ -153,7 +153,7 @@ send("构建完成", title="CI", category="告警")
 send("<b>完成</b>", msg_type="html", html_height=280, url="https://example.com")
 
 # 显式客户端：适合长期运行的服务 / 不依赖配置文件
-client = MeoWClient("Vinlyx", timeout=5, retries=3)
+client = MeoWClient("your-nickname", timeout=5, retries=3)
 result = client.send("磁盘使用率 91%", title="监控", category="告警")
 print(result.status, result.message, result.elapsed_ms)
 
