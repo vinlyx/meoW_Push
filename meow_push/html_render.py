@@ -7,19 +7,31 @@ container that carries a large inline ``font-size`` (inline styles survive
 sanitizers that drop ``<style>``) plus a class-scoped stylesheet for headings,
 lists, code and tables.
 
+Two field-tested details are baked in:
+
+* the container has an explicit pixel ``width`` (900px) with ``max-width:100%``
+  so text wraps at ~18 CJK characters per line instead of overflowing;
+* the ``<style>`` block trails the content, because MeoW derives the collapsed
+  notification preview from the head of the message and a leading stylesheet
+  made that preview blank.
+
 Deliberate limits:
 
 * no ``color`` / ``background`` — the app's light or dark theme keeps working;
 * no external fonts, scripts or images — nothing to fail offline;
-* everything can be overridden: ``font_size``, ``extra_css`` or ``wrap=False``.
+* everything can be overridden: ``font_size``, ``width``, ``extra_css`` or
+  ``wrap=False``.
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
-#: 4x the roughly 10px text MeoW uses for a bare HTML snippet.
-DEFAULT_FONT_SIZE = 40
+from .constants import DEFAULT_HTML_FONT_SIZE, DEFAULT_HTML_WIDTH
+
+#: Comfortable size on a phone; ~4.8x what a bare snippet renders at.
+DEFAULT_FONT_SIZE = DEFAULT_HTML_FONT_SIZE
+DEFAULT_WIDTH = DEFAULT_HTML_WIDTH
 BASE_LINE_HEIGHT = 1.55
 
 #: Height (px) assumed to be "about five lines" when the caller passes none.
@@ -72,22 +84,30 @@ def render(
     content: str,
     *,
     font_size: int = DEFAULT_FONT_SIZE,
+    width: int = DEFAULT_WIDTH,
     extra_css: Optional[str] = None,
 ) -> str:
-    """Wrap *content* with the default stylesheet and container."""
+    """Wrap *content* with the default stylesheet and container.
+
+    Ordering matters: the container comes **first** and the ``<style>`` block
+    **last**. MeoW builds the collapsed notification preview from the leading
+    characters of the message; with the stylesheet first, tag stripping left
+    the preview empty. Styles still apply from any position in the document.
+    """
     css = base_css(font_size)
     if extra_css and extra_css.strip():
         # Appended last: same specificity means later rules win.
         css += "\n/* --- user overrides --- */\n" + extra_css.strip() + "\n"
-    inline = (
-        "font-size:{0}px;line-height:{1};word-wrap:break-word;"
-        "overflow-wrap:anywhere;".format(font_size, BASE_LINE_HEIGHT)
+    style_attr = (
+        "font-size:%dpx;line-height:%s;width:%dpx;max-width:100%%;"
+        "box-sizing:border-box;word-wrap:break-word;overflow-wrap:anywhere;"
+        % (font_size, BASE_LINE_HEIGHT, width)
     )
-    return (
-        "<style>\n"
-        + css
-        + "</style>\n"
-        + '<div class="{0}" style="{1}">{2}</div>'.format(_CLASS, inline, content)
+    return '<div class="%s" style="%s">%s</div>\n<style>\n%s</style>' % (
+        _CLASS,
+        style_attr,
+        content,
+        css,
     )
 
 
@@ -95,10 +115,11 @@ def prepare(
     content: str,
     *,
     font_size: int = DEFAULT_FONT_SIZE,
+    width: int = DEFAULT_WIDTH,
     extra_css: Optional[str] = None,
     wrap: bool = True,
 ) -> str:
     """Apply the default styling unless disabled or already a full document."""
     if not wrap or is_full_document(content):
         return content
-    return render(content, font_size=font_size, extra_css=extra_css)
+    return render(content, font_size=font_size, width=width, extra_css=extra_css)

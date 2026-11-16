@@ -19,8 +19,10 @@ class ConfigTests(unittest.TestCase):
             config = Config.load(path)
             self.assertEqual(config.nickname, "")
             self.assertEqual(config.base_url, "https://api.chuckfang.com")
-            self.assertEqual(config.html_font_size, 40)
+            self.assertEqual(config.html_font_size, 48)
+            self.assertEqual(config.html_width, 900)
             self.assertTrue(config.html_wrap)
+            self.assertFalse(config.rate_limit)
             self.assertEqual(config.path, path)
 
     def test_roundtrip_and_permissions(self) -> None:
@@ -56,12 +58,18 @@ class ConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
             Config(
-                html_font_size=32, html_css=".meow-html-push p{margin:0}", html_wrap=False
+                html_font_size=32,
+                html_width=760,
+                html_css=".meow-html-push p{margin:0}",
+                html_wrap=False,
+                rate_limit=True,
             ).save(path)
             loaded = Config.load(path)
             self.assertEqual(loaded.html_font_size, 32)
+            self.assertEqual(loaded.html_width, 760)
             self.assertEqual(loaded.html_css, ".meow-html-push p{margin:0}")
             self.assertFalse(loaded.html_wrap)
+            self.assertTrue(loaded.rate_limit)
 
     def test_invalid_font_size_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

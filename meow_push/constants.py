@@ -16,12 +16,23 @@ MAX_RETRIES = 2
 CATEGORY_MAX_CHARS = 10
 
 #: Default base font size for HTML notifications, in CSS px.
-#: MeoW renders a bare snippet at roughly 10px, so 40px is the "4x" baseline.
-DEFAULT_HTML_FONT_SIZE = 40
+#: Measured on harmony devices: a bare snippet renders around 10px, and 48px
+#: is the size the user found comfortable (~4.8x).
+DEFAULT_HTML_FONT_SIZE = 48
+
+#: Default content width for HTML notifications, in CSS px.
+#: A 48px line of ~24 mixed CJK/ASCII characters measured ~1000px wide before
+#: wrapping, so 900px keeps roughly 18 CJK characters per line without the
+#: card overflowing horizontally. ``max-width:100%`` keeps narrow viewports safe.
+DEFAULT_HTML_WIDTH = 900
 
 #: Lower/upper bounds accepted for the HTML base font size.
 HTML_FONT_SIZE_MIN = 8
 HTML_FONT_SIZE_MAX = 200
+
+#: Lower/upper bounds accepted for the HTML content width.
+HTML_WIDTH_MIN = 200
+HTML_WIDTH_MAX = 2400
 
 #: Local, best-effort mirror of the server side quota:
 #: 1 message per 3 seconds, 15 per minute, 60 per hour.

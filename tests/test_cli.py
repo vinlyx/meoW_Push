@@ -168,6 +168,22 @@ class CliTests(unittest.TestCase):
             self.assertIn("color:#c00", body["msg"])
             self.assertIn("htmlHeight=220", server.requests[0]["path"])
 
+    def test_width_flag_reaches_wrapper(self) -> None:
+        with MockMeoW() as server:
+            path = self._write_config(server)
+            code, _ = run_cli(
+                ["--config", str(path), "send", "x", "--html", "--width", "700"]
+            )
+            self.assertEqual(code, 0)
+            message = json.loads(server.requests[0]["body"].decode("utf-8"))["msg"]
+            self.assertIn("width:700px", message)
+
+    def test_rate_limit_flag_is_accepted(self) -> None:
+        with MockMeoW() as server:
+            path = self._write_config(server)
+            code, _ = run_cli(["--config", str(path), "send", "x", "--rate-limit"])
+            self.assertEqual(code, 0)
+
     def test_no_html_wrap_flag(self) -> None:
         with MockMeoW() as server:
             path = self._write_config(server)

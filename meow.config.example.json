@@ -5,7 +5,9 @@
   "retries": 2,
   "default_title": null,
   "default_category": null,
-  "html_font_size": 40,
+  "html_font_size": 48,
+  "html_width": 900,
   "html_css": null,
-  "html_wrap": true
+  "html_wrap": true,
+  "rate_limit": false
 }

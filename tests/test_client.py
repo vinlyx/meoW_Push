@@ -96,16 +96,31 @@ class HtmlStylingTests(unittest.TestCase):
     def _client(self, server, **kwargs):
         return MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False, **kwargs)
 
-    def test_default_wrap_sets_large_font_and_adaptive_height(self) -> None:
+    def test_default_wrap_sets_large_font_width_and_height(self) -> None:
         with MockMeoW() as server:
             self._client(server).send("<b>完成</b>", msg_type="html")
             request = server.requests[0]
             body = json.loads(request["body"].decode("utf-8"))
             self.assertIn('class="meow-html-push"', body["msg"])
-            self.assertIn("font-size:40px", body["msg"])
+            self.assertIn("font-size:48px", body["msg"])
+            self.assertIn("width:900px", body["msg"])
+            self.assertIn("max-width:100%", body["msg"])
             self.assertIn("<b>完成</b>", body["msg"])
             query = urllib.parse.parse_qs(urllib.parse.urlsplit(request["path"]).query)
-            self.assertEqual(query["htmlHeight"], ["310"])
+            self.assertEqual(query["htmlHeight"], ["370"])
+
+    def test_style_block_trails_content_for_preview(self) -> None:
+        with MockMeoW() as server:
+            self._client(server).send("通知正文", msg_type="html")
+            message = json.loads(server.requests[0]["body"].decode("utf-8"))["msg"]
+            # The collapsed preview reads from the head: content must come first.
+            self.assertLess(message.index("通知正文"), message.index("<style>"))
+
+    def test_width_can_be_overridden(self) -> None:
+        with MockMeoW() as server:
+            self._client(server).send("x", msg_type="html", html_width=720)
+            message = json.loads(server.requests[0]["body"].decode("utf-8"))["msg"]
+            self.assertIn("width:720px", message)
 
     def test_wrap_can_be_disabled(self) -> None:
         with MockMeoW() as server:
@@ -152,6 +167,12 @@ class HtmlStylingTests(unittest.TestCase):
         for size in (4, 400):
             with self.assertRaises(MeoWValidationError):
                 client.send("x", msg_type="html", html_font_size=size)
+
+    def test_width_is_bounded(self) -> None:
+        client = MeoWClient("Vinlyx", rate_limit=False)
+        for width in (100, 5000):
+            with self.assertRaises(MeoWValidationError):
+                client.send("x", msg_type="html", html_width=width)
 
 
 class ErrorMappingTests(unittest.TestCase):
@@ -308,6 +329,13 @@ class RateLimiterTests(unittest.TestCase):
             now[0] += 1.0
         with self.assertRaises(MeoWRateLimitError):
             limiter.acquire()
+
+    def test_client_does_not_rate_limit_by_default(self) -> None:
+        with MockMeoW() as server:
+            client = MeoWClient("Vinlyx", base_url=server.base_url)
+            client.send("第一条")
+            client.send("第二条")  # 会员账号无配额，默认不做本地限流
+            self.assertEqual(len(server.requests), 2)
 
 
 if __name__ == "__main__":

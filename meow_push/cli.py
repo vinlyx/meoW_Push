@@ -71,7 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     send_parser.add_argument("--html-height", dest="html_height", type=int,
                              help="HTML 显示高度（像素，仅 --html 时生效；默认随字号自适应）")
     send_parser.add_argument("--font-size", dest="html_font_size", type=int, metavar="PX",
-                             help="HTML 基础字号，默认 40px（可用配置 html_font_size 覆盖）")
+                             help="HTML 基础字号，默认 48px（可用配置 html_font_size 覆盖）")
+    send_parser.add_argument("--width", dest="html_width", type=int, metavar="PX",
+                             help="HTML 内容宽度，默认 900px（约 18 个汉字/行）")
     send_parser.add_argument("--css", dest="html_css", metavar="CSS",
                              help="追加自定义 CSS，可写 @file.css 从文件读取；排在默认样式之后")
     send_parser.add_argument("--no-html-wrap", dest="no_html_wrap", action="store_true",
@@ -81,8 +83,10 @@ def build_parser() -> argparse.ArgumentParser:
                              help="只打印请求，不真正发送")
     send_parser.add_argument("--wait", action="store_true",
                              help="命中本地频率限制时短暂等待，而不是直接报错")
+    send_parser.add_argument("--rate-limit", dest="rate_limit", action="store_true",
+                             help="启用本地频率限制（默认关闭，配置 rate_limit 可固化）")
     send_parser.add_argument("--no-rate-limit", dest="no_rate_limit", action="store_true",
-                             help="关闭本地频率限制（服务端限制仍然生效）")
+                             help="关闭本地频率限制（默认即关闭，保留以兼容旧脚本）")
     send_parser.add_argument("--no-prompt", dest="no_prompt", action="store_true",
                              help="缺少昵称时不交互询问，直接报错")
 
@@ -144,14 +148,20 @@ def _run_send(args: argparse.Namespace) -> int:
         dry_run = _opt(args, "dry_run", False)
 
     nickname = config.ensure_nickname(prompt=_can_prompt(args))
+    rate_limit = config.rate_limit
+    if _opt(args, "rate_limit", False):
+        rate_limit = True
+    if _opt(args, "no_rate_limit", False):
+        rate_limit = False
     client = MeoWClient(
         nickname,
         base_url=config.base_url,
         timeout=config.timeout,
         retries=config.retries,
-        rate_limit=not _opt(args, "no_rate_limit", False),
+        rate_limit=rate_limit,
         wait_on_rate_limit=_opt(args, "wait", False),
         html_font_size=config.html_font_size,
+        html_width=config.html_width,
         html_css=config.html_css,
         html_wrap=config.html_wrap,
     )
@@ -164,6 +174,7 @@ def _run_send(args: argparse.Namespace) -> int:
         msg_type=msg_type,
         html_height=html_height,
         html_font_size=_opt(args, "html_font_size"),
+        html_width=_opt(args, "html_width"),
         html_css=_load_css(_opt(args, "html_css")),
         html_wrap=False if _opt(args, "no_html_wrap", False) else None,
         dry_run=dry_run,

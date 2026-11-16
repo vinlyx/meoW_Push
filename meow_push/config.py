@@ -17,9 +17,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional
 
-from .constants import DEFAULT_BASE_URL, DEFAULT_HTML_FONT_SIZE, MAX_RETRIES, REQUEST_TIMEOUT
+from .constants import (
+    DEFAULT_BASE_URL,
+    DEFAULT_HTML_FONT_SIZE,
+    DEFAULT_HTML_WIDTH,
+    MAX_RETRIES,
+    REQUEST_TIMEOUT,
+)
 from .errors import MeoWConfigError, MeoWError
-from .validators import validate_font_size, validate_nickname
+from .validators import validate_font_size, validate_html_width, validate_nickname
 
 APP_DIR_NAME = "meow-push"
 CONFIG_FILE_NAME = "config.json"
@@ -50,8 +56,10 @@ class Config:
     default_title: Optional[str] = None
     default_category: Optional[str] = None
     html_font_size: int = DEFAULT_HTML_FONT_SIZE
+    html_width: int = DEFAULT_HTML_WIDTH
     html_css: Optional[str] = None
     html_wrap: bool = True
+    rate_limit: bool = False
     path: Optional[Path] = field(default=None, repr=False, compare=False)
 
     # -- construction -----------------------------------------------------
@@ -118,11 +126,22 @@ class Config:
             if not isinstance(html_css, str):
                 raise MeoWConfigError("html_css 必须是字符串")
             config.html_css = html_css
+        html_width = data.get("html_width")
+        if html_width is not None:
+            try:
+                config.html_width = validate_html_width(html_width)
+            except MeoWError as exc:
+                raise MeoWConfigError("html_width 无效：{0}".format(exc))
         html_wrap = data.get("html_wrap")
         if html_wrap is not None:
             if not isinstance(html_wrap, bool):
                 raise MeoWConfigError("html_wrap 必须是 true/false")
             config.html_wrap = html_wrap
+        rate_limit = data.get("rate_limit")
+        if rate_limit is not None:
+            if not isinstance(rate_limit, bool):
+                raise MeoWConfigError("rate_limit 必须是 true/false")
+            config.rate_limit = rate_limit
         return config
 
     def apply_env(self, environ: Optional[Mapping[str, str]] = None) -> "Config":
@@ -154,8 +173,10 @@ class Config:
             "default_title": self.default_title,
             "default_category": self.default_category,
             "html_font_size": self.html_font_size,
+            "html_width": self.html_width,
             "html_css": self.html_css,
             "html_wrap": self.html_wrap,
+            "rate_limit": self.rate_limit,
         }
 
     def save(self, path: Optional[Any] = None) -> Path:
