@@ -65,7 +65,7 @@ from .validators import (
 )
 from .version import __version__
 
-USER_AGENT = "meow-push/{0} (+https://github.com/vinlyx/meoW_Push)".format(__version__)
+USER_AGENT = "meow-push/{0} (+https://github.com/vinlyx/meowMsg)".format(__version__)
 
 _STATUS_HINTS = {
     STATUS_BAD_REQUEST: "参数不合法：检查 title / msg / category 的长度与格式",

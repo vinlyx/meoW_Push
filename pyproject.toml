@@ -1,15 +1,16 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "meow-push"
-version = "0.3.0"
+version = "1.0.0"
 description = "Push notifications to a HarmonyOS phone through MeoW (zero dependencies)."
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "MIT" }
-authors = [{ name = "Vincent Li" }]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Vinlyx" }]
 keywords = ["meow", "harmonyos", "notification", "push", "bark"]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -18,7 +19,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/vinlyx/meoW_Push"
+Homepage = "https://github.com/vinlyx/meowMsg"
 
 [project.scripts]
 meowpush = "meow_push.cli:main"
