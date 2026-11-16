@@ -1,0 +1,8 @@
+{
+  "nickname": "",
+  "base_url": "https://api.chuckfang.com",
+  "timeout": 10.0,
+  "retries": 2,
+  "default_title": null,
+  "default_category": null
+}

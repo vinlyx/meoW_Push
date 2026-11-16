@@ -1,0 +1,22 @@
+# 本地配置：含 MeoW 昵称，等同于推送凭证，绝不提交
+meow.config.json
+config.json
+*.local.json
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+
+# 测试与工具
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+.DS_Store
