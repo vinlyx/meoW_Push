@@ -17,9 +17,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Mapping, Optional
 
-from .constants import DEFAULT_BASE_URL, MAX_RETRIES, REQUEST_TIMEOUT
+from .constants import DEFAULT_BASE_URL, DEFAULT_HTML_FONT_SIZE, MAX_RETRIES, REQUEST_TIMEOUT
 from .errors import MeoWConfigError, MeoWError
-from .validators import validate_nickname
+from .validators import validate_font_size, validate_nickname
 
 APP_DIR_NAME = "meow-push"
 CONFIG_FILE_NAME = "config.json"
@@ -49,6 +49,9 @@ class Config:
     retries: int = MAX_RETRIES
     default_title: Optional[str] = None
     default_category: Optional[str] = None
+    html_font_size: int = DEFAULT_HTML_FONT_SIZE
+    html_css: Optional[str] = None
+    html_wrap: bool = True
     path: Optional[Path] = field(default=None, repr=False, compare=False)
 
     # -- construction -----------------------------------------------------
@@ -104,6 +107,22 @@ class Config:
         default_category = data.get("default_category")
         if default_category:
             config.default_category = str(default_category)
+        font_size = data.get("html_font_size")
+        if font_size is not None:
+            try:
+                config.html_font_size = validate_font_size(font_size)
+            except MeoWError as exc:
+                raise MeoWConfigError("html_font_size 无效：{0}".format(exc))
+        html_css = data.get("html_css")
+        if html_css is not None:
+            if not isinstance(html_css, str):
+                raise MeoWConfigError("html_css 必须是字符串")
+            config.html_css = html_css
+        html_wrap = data.get("html_wrap")
+        if html_wrap is not None:
+            if not isinstance(html_wrap, bool):
+                raise MeoWConfigError("html_wrap 必须是 true/false")
+            config.html_wrap = html_wrap
         return config
 
     def apply_env(self, environ: Optional[Mapping[str, str]] = None) -> "Config":
@@ -134,6 +153,9 @@ class Config:
             "retries": self.retries,
             "default_title": self.default_title,
             "default_category": self.default_category,
+            "html_font_size": self.html_font_size,
+            "html_css": self.html_css,
+            "html_wrap": self.html_wrap,
         }
 
     def save(self, path: Optional[Any] = None) -> Path:

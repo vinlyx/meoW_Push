@@ -28,6 +28,7 @@ from typing import Any, Callable, Deque, Dict, Optional, Tuple
 
 from .constants import (
     DEFAULT_BASE_URL,
+    DEFAULT_HTML_FONT_SIZE,
     MAX_RETRIES,
     RATE_RULES,
     REQUEST_TIMEOUT,
@@ -45,9 +46,15 @@ from .errors import (
     MeoWRateLimitError,
     MeoWValidationError,
 )
+from .html_render import (
+    default_height as default_html_height,
+    is_full_document,
+    prepare as prepare_html,
+)
 from .validators import (
     clean_optional_text,
     validate_category,
+    validate_font_size,
     validate_html_height,
     validate_link,
     validate_message,
@@ -164,6 +171,9 @@ class MeoWClient:
         rate_limit: bool = True,
         wait_on_rate_limit: bool = False,
         max_wait: float = 5.0,
+        html_font_size: int = DEFAULT_HTML_FONT_SIZE,
+        html_css: Optional[str] = None,
+        html_wrap: bool = True,
         user_agent: Optional[str] = None,
         sleeper: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
@@ -178,6 +188,9 @@ class MeoWClient:
             raise MeoWValidationError("retries 不能为负数")
         self.wait_on_rate_limit = bool(wait_on_rate_limit)
         self.max_wait = float(max_wait)
+        self.html_font_size = validate_font_size(html_font_size)
+        self.html_css = html_css
+        self.html_wrap = bool(html_wrap)
         self.user_agent = user_agent or USER_AGENT
         self._sleep = sleeper
         self._clock = clock
@@ -196,16 +209,39 @@ class MeoWClient:
         category: Optional[str] = None,
         msg_type: str = "text",
         html_height: Optional[int] = None,
+        html_font_size: Optional[int] = None,
+        html_css: Optional[str] = None,
+        html_wrap: Optional[bool] = None,
         dry_run: bool = False,
     ) -> SendResult:
-        """Push one notification. Raises a :class:`MeoWError` subclass on failure."""
-        message = validate_message(msg)
+        """Push one notification. Raises a :class:`MeoWError` subclass on failure.
+
+        For ``msg_type="html"`` the snippet is wrapped with a large default
+        font (``html_font_size``, 40px by default) unless ``html_wrap=False``
+        or the content is already a full ``<html>`` document. ``html_css`` is
+        appended after the defaults, so it can override any of them.
+        """
+        raw_message = validate_message(msg)
         clean_title = clean_optional_text(title, "title")
         clean_category = validate_category(category)
         mode = validate_msg_type(msg_type)
         height = validate_html_height(html_height, mode)
         link = validate_link(url, "url")
         icon = validate_link(img_url, "imgUrl")
+        font_size = validate_font_size(
+            self.html_font_size if html_font_size is None else html_font_size
+        )
+        wrap = self.html_wrap if html_wrap is None else bool(html_wrap)
+        css = self.html_css if html_css is None else html_css
+
+        message = raw_message
+        if mode == "html":
+            message = prepare_html(
+                raw_message, font_size=font_size, extra_css=css, wrap=wrap
+            )
+            if height is None and wrap and not is_full_document(raw_message):
+                # A 40px body needs far more than the service default of 200px.
+                height = default_html_height(font_size)
 
         params: Dict[str, str] = {"msgType": mode}
         if height is not None:

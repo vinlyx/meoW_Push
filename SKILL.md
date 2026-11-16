@@ -59,10 +59,15 @@ meowpush send "hi" --json        # 机器可读输出
 | `-i/--img-url` | 图标 URL，建议 216×216 PNG |
 | `-c/--category` | 分类，**≤10 个字**，不能含换行 |
 | `--html` | 按 HTML 渲染（`msgType=html`） |
-| `--html-height` | HTML 显示高度 px，仅 `--html` 时有效 |
+| `--html-height` | HTML 显示高度 px，仅 `--html` 时有效；缺省随字号自适应 |
+| `--font-size` | HTML 基础字号 px，默认 40（App 原始渲染约 10px，故默认放大 4 倍） |
+| `--css` | 追加自定义 CSS，`@file.css` 从文件读；排在默认样式之后 |
+| `--no-html-wrap` | 关闭默认样式包装，原样发送片段 |
 | `--wait` | 命中本地限流时等待而非报错 |
 | `--dry-run` | 不发送，只回显请求 |
 | `--json` | 结果以 JSON 输出 |
+
+**HTML 默认样式**：`--html` 时自动包一层 40px 字号 + 行高 1.55 的容器，并附带标题/列表/代码/表格的基础样式，因此直接用 `<b>`、`<p>`、`<ul>` 这类简单标签即可，**不要**再手写小字号 `font-size`。需要微调时用 `--font-size` 或 `--css`；发完整 HTML 文档时不会被二次包装。
 
 ## 失败排查
 

@@ -66,6 +66,9 @@ POSIX 下权限为 `0600`。也可以用 `--config <path>` 或环境变量 `MEOW
 | `retries` | 瞬时错误重试次数 | `2` |
 | `default_title` | 未传 `-t` 时的默认标题 | `null` |
 | `default_category` | 未传 `-c` 时的默认分类 | `null` |
+| `html_font_size` | HTML 基础字号（px，8–200） | `40` |
+| `html_css` | 追加到默认样式之后的 CSS | `null` |
+| `html_wrap` | 是否启用默认样式包装 | `true` |
 
 环境变量 `MEOW_NICKNAME` / `MEOW_BASE_URL` / `MEOW_TIMEOUT` 可临时覆盖，且不会写回文件。
 
@@ -91,9 +94,45 @@ meowpush "省略 send 也行"               # 便捷写法
 | `-i/--img-url` | JSON body | 通知图标，建议 216×216 PNG |
 | `-c/--category` | JSON body | 自定义分类，**最多 10 个字**，不能含换行 |
 | `--html` | query | `msgType=html`，在 App 内渲染 HTML |
-| `--html-height` | query | HTML 显示高度（px），仅 `--html` 时有效 |
+| `--html-height` | query | HTML 显示高度（px），仅 `--html` 时有效；缺省随字号自适应 |
+| `--font-size` | 包装层 | HTML 基础字号，默认 40px |
+| `--css` | 包装层 | 追加自定义 CSS，支持 `@file.css` |
+| `--no-html-wrap` | 包装层 | 关闭默认样式，原样发送片段 |
 
 本地频率限制与服务端配额一致（3 秒 1 条 / 每分钟 15 条 / 每小时 60 条）；命中时默认快速报错，`--wait` 改为短暂等待，`--no-rate-limit` 关闭本地检查。
+
+## HTML 通知的默认样式
+
+MeoW 的 HTML 视图基础字号很小（约 10px），直接发裸片段在手机上几乎读不清。因此 `--html` 时会自动做两层包装：
+
+1. 外层容器 `<div class="meow-html-push" style="font-size:40px;line-height:1.55;...">`——**内联样式**，即使 App 过滤掉 `<style>` 标签也能生效，并通过 CSS 继承作用到 `p` / `li` / `span` 等子元素；
+2. 一段类作用域样式表，补齐标题层级（h1–h6）、列表缩进、图片自适应、行内代码换行、表格边框。
+
+设计上的克制：
+
+- **不设置文字颜色和背景色**，让 App 的浅色/深色主题各自生效；
+- 不引入外部字体、脚本或远程资源，离线也能正常渲染；
+- 只作用于 `.meow-html-push` 内部，不会污染宿主界面。
+
+`htmlHeight` 缺省随字号自适应（约 5 行：40px → 310px），显式传 `--html-height` 优先。
+
+覆盖方式，从轻到重：
+
+```bash
+meowpush send "..." --html --font-size 32              # 只改字号
+meowpush send "..." --html --css "@my.css"             # 追加样式表文件
+meowpush send "..." --html --css ".meow-html-push p{margin:0}"   # 内联一段
+meowpush send "..." --html --no-html-wrap              # 完全关闭包装
+```
+
+`--css` 的内容排在默认样式**之后**，同优先级下后写的规则生效；需要压过继承时把选择器写具体一点（如 `.meow-html-push p`）。若内容本身已是完整的 `<html>` 文档，则原样发送，不再包装。
+
+想长期固定字号，写进配置即可：
+
+```bash
+meowpush config set Vinlyx    # 保留昵称
+# 再编辑 ~/.config/meow-push/config.json： "html_font_size": 32
+```
 
 ## Python 库用法
 

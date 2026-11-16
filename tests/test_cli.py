@@ -146,6 +146,61 @@ class CliTests(unittest.TestCase):
             self.assertIn("测试消息", body["msg"])
             self.assertEqual(body["category"], "测试")
 
+    def test_font_size_and_css_flags(self) -> None:
+        with MockMeoW() as server:
+            path = self._write_config(server)
+            code, _ = run_cli(
+                [
+                    "--config",
+                    str(path),
+                    "send",
+                    "<b>x</b>",
+                    "--html",
+                    "--font-size",
+                    "28",
+                    "--css",
+                    ".meow-html-push p{color:#c00}",
+                ]
+            )
+            self.assertEqual(code, 0)
+            body = json.loads(server.requests[0]["body"].decode("utf-8"))
+            self.assertIn("font-size:28px", body["msg"])
+            self.assertIn("color:#c00", body["msg"])
+            self.assertIn("htmlHeight=220", server.requests[0]["path"])
+
+    def test_no_html_wrap_flag(self) -> None:
+        with MockMeoW() as server:
+            path = self._write_config(server)
+            code, _ = run_cli(
+                ["--config", str(path), "send", "<b>x</b>", "--html", "--no-html-wrap"]
+            )
+            self.assertEqual(code, 0)
+            body = json.loads(server.requests[0]["body"].decode("utf-8"))
+            self.assertEqual(body["msg"], "<b>x</b>")
+
+    def test_css_file_is_loaded(self) -> None:
+        with MockMeoW() as server:
+            path = self._write_config(server)
+            css_file = self.tmp / "custom.css"
+            css_file.write_text(".meow-html-push p{font-size:60px}", encoding="utf-8")
+            code, _ = run_cli(
+                ["--config", str(path), "send", "x", "--html", "--css", "@{0}".format(css_file)]
+            )
+            self.assertEqual(code, 0)
+            body = json.loads(server.requests[0]["body"].decode("utf-8"))
+            self.assertIn("font-size:60px", body["msg"])
+
+    def test_config_html_defaults_are_applied(self) -> None:
+        with MockMeoW() as server:
+            path = self._write_config(
+                server, html_font_size=32, html_css=".meow-html-push p{margin:0}"
+            )
+            code, _ = run_cli(["--config", str(path), "send", "x", "--html"])
+            self.assertEqual(code, 0)
+            message = json.loads(server.requests[0]["body"].decode("utf-8"))["msg"]
+            self.assertIn("font-size:32px", message)
+            self.assertIn("margin:0", message)
+
     def test_config_defaults_are_applied(self) -> None:
         with MockMeoW() as server:
             path = self._write_config(server, default_category="定时任务", default_title="默认标题")

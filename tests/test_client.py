@@ -62,7 +62,8 @@ class SendRequestTests(unittest.TestCase):
             self.assertEqual(query["msgType"], ["html"])
             self.assertEqual(query["htmlHeight"], ["350"])
             body = json.loads(server.requests[0]["body"].decode("utf-8"))
-            self.assertEqual(body["msg"], html)
+            # The snippet is wrapped, but never URL-encoded or escaped.
+            self.assertIn(html, body["msg"])
 
     def test_nickname_is_percent_encoded_in_path(self) -> None:
         with MockMeoW() as server:
@@ -89,6 +90,68 @@ class SendRequestTests(unittest.TestCase):
         self.assertEqual(request["method"], "POST")
         self.assertIn("htmlHeight=200", request["url"])
         self.assertEqual(request["json"]["title"], "t")
+
+
+class HtmlStylingTests(unittest.TestCase):
+    def _client(self, server, **kwargs):
+        return MeoWClient("Vinlyx", base_url=server.base_url, rate_limit=False, **kwargs)
+
+    def test_default_wrap_sets_large_font_and_adaptive_height(self) -> None:
+        with MockMeoW() as server:
+            self._client(server).send("<b>完成</b>", msg_type="html")
+            request = server.requests[0]
+            body = json.loads(request["body"].decode("utf-8"))
+            self.assertIn('class="meow-html-push"', body["msg"])
+            self.assertIn("font-size:40px", body["msg"])
+            self.assertIn("<b>完成</b>", body["msg"])
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(request["path"]).query)
+            self.assertEqual(query["htmlHeight"], ["310"])
+
+    def test_wrap_can_be_disabled(self) -> None:
+        with MockMeoW() as server:
+            self._client(server).send("<b>完成</b>", msg_type="html", html_wrap=False)
+            request = server.requests[0]
+            body = json.loads(request["body"].decode("utf-8"))
+            self.assertEqual(body["msg"], "<b>完成</b>")
+            self.assertNotIn("htmlHeight", request["path"])
+
+    def test_font_size_override_and_css_appended_last(self) -> None:
+        with MockMeoW() as server:
+            css = ".meow-html-push p { color: #c00; }"
+            self._client(server).send("x", msg_type="html", html_font_size=72, html_css=css)
+            request = server.requests[0]
+            body = json.loads(request["body"].decode("utf-8"))
+            self.assertIn("font-size:72px", body["msg"])
+            self.assertIn(css, body["msg"])
+            self.assertGreater(body["msg"].index(css), body["msg"].index("meow-html-push h1"))
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(request["path"]).query)
+            self.assertEqual(query["htmlHeight"], ["560"])
+
+    def test_explicit_height_wins_over_adaptive_default(self) -> None:
+        with MockMeoW() as server:
+            self._client(server).send("x", msg_type="html", html_height=500)
+            self.assertIn("htmlHeight=500", server.requests[0]["path"])
+
+    def test_full_document_is_left_untouched(self) -> None:
+        doc = "<!DOCTYPE html><html><body><p>x</p></body></html>"
+        with MockMeoW() as server:
+            self._client(server).send(doc, msg_type="html")
+            request = server.requests[0]
+            body = json.loads(request["body"].decode("utf-8"))
+            self.assertEqual(body["msg"], doc)
+            self.assertNotIn("htmlHeight", request["path"])
+
+    def test_text_mode_is_never_wrapped(self) -> None:
+        with MockMeoW() as server:
+            self._client(server).send("<b>x</b>")
+            body = json.loads(server.requests[0]["body"].decode("utf-8"))
+            self.assertEqual(body["msg"], "<b>x</b>")
+
+    def test_font_size_is_bounded(self) -> None:
+        client = MeoWClient("Vinlyx", rate_limit=False)
+        for size in (4, 400):
+            with self.assertRaises(MeoWValidationError):
+                client.send("x", msg_type="html", html_font_size=size)
 
 
 class ErrorMappingTests(unittest.TestCase):

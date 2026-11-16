@@ -9,6 +9,7 @@ import argparse
 import json
 import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Any, List, Optional
 
 from .client import MeoWClient, SendResult
@@ -68,7 +69,13 @@ def build_parser() -> argparse.ArgumentParser:
     send_parser.add_argument("-c", "--category", help="自定义分类（最多 10 个字）")
     send_parser.add_argument("--html", action="store_true", help="按 HTML 渲染消息（msgType=html）")
     send_parser.add_argument("--html-height", dest="html_height", type=int,
-                             help="HTML 显示高度（像素，仅 --html 时生效）")
+                             help="HTML 显示高度（像素，仅 --html 时生效；默认随字号自适应）")
+    send_parser.add_argument("--font-size", dest="html_font_size", type=int, metavar="PX",
+                             help="HTML 基础字号，默认 40px（可用配置 html_font_size 覆盖）")
+    send_parser.add_argument("--css", dest="html_css", metavar="CSS",
+                             help="追加自定义 CSS，可写 @file.css 从文件读取；排在默认样式之后")
+    send_parser.add_argument("--no-html-wrap", dest="no_html_wrap", action="store_true",
+                             help="关闭默认样式包装，原样发送 HTML 片段")
     send_parser.add_argument("--stdin", action="store_true", help="从 stdin 读取消息内容")
     send_parser.add_argument("--dry-run", dest="dry_run", action="store_true",
                              help="只打印请求，不真正发送")
@@ -144,6 +151,9 @@ def _run_send(args: argparse.Namespace) -> int:
         retries=config.retries,
         rate_limit=not _opt(args, "no_rate_limit", False),
         wait_on_rate_limit=_opt(args, "wait", False),
+        html_font_size=config.html_font_size,
+        html_css=config.html_css,
+        html_wrap=config.html_wrap,
     )
     result = client.send(
         msg,
@@ -153,6 +163,9 @@ def _run_send(args: argparse.Namespace) -> int:
         category=category,
         msg_type=msg_type,
         html_height=html_height,
+        html_font_size=_opt(args, "html_font_size"),
+        html_css=_load_css(_opt(args, "html_css")),
+        html_wrap=False if _opt(args, "no_html_wrap", False) else None,
         dry_run=dry_run,
     )
     _print_result(result, args, dry_run=dry_run)
@@ -248,6 +261,19 @@ def _apply_overrides(config: Config, args: argparse.Namespace) -> None:
         if retries < 0:
             raise MeoWValidationError("--retries 不能为负数")
         config.retries = int(retries)
+
+
+def _load_css(value: Optional[str]) -> Optional[str]:
+    """Accept inline CSS or ``@path/to/file.css``."""
+    if not value:
+        return None
+    if value.startswith("@"):
+        path = Path(value[1:]).expanduser()
+        try:
+            return path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise MeoWValidationError("无法读取 CSS 文件 {0}：{1}".format(path, exc))
+    return value
 
 
 def _read_message(args: argparse.Namespace) -> str:

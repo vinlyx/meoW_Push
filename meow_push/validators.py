@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .constants import CATEGORY_MAX_CHARS
+from .constants import CATEGORY_MAX_CHARS, HTML_FONT_SIZE_MAX, HTML_FONT_SIZE_MIN
 from .errors import MeoWValidationError
 
 MAX_NICKNAME_CHARS = 64
@@ -113,4 +113,23 @@ def validate_html_height(value: Any, msg_type: str) -> Optional[int]:
         raise MeoWValidationError("htmlHeight 必须大于 0")
     if msg_type != "html":
         raise MeoWValidationError("htmlHeight 仅在 msgType=html 时有效")
+    return value
+
+
+def validate_font_size(value: Any) -> int:
+    """Base font size for HTML notifications, in CSS px."""
+    if isinstance(value, bool):
+        raise MeoWValidationError("html 字号必须是整数")
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    if isinstance(value, str) and value.strip().isdigit():
+        value = int(value.strip())
+    if not isinstance(value, int):
+        raise MeoWValidationError("html 字号必须是整数")
+    if not HTML_FONT_SIZE_MIN <= value <= HTML_FONT_SIZE_MAX:
+        raise MeoWValidationError(
+            "html 字号需在 {0}–{1}px 之间，当前为 {2}".format(
+                HTML_FONT_SIZE_MIN, HTML_FONT_SIZE_MAX, value
+            )
+        )
     return value

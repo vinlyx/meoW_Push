@@ -15,6 +15,14 @@ MAX_RETRIES = 2
 #: Maximum number of characters allowed in a notification category.
 CATEGORY_MAX_CHARS = 10
 
+#: Default base font size for HTML notifications, in CSS px.
+#: MeoW renders a bare snippet at roughly 10px, so 40px is the "4x" baseline.
+DEFAULT_HTML_FONT_SIZE = 40
+
+#: Lower/upper bounds accepted for the HTML base font size.
+HTML_FONT_SIZE_MIN = 8
+HTML_FONT_SIZE_MAX = 200
+
 #: Local, best-effort mirror of the server side quota:
 #: 1 message per 3 seconds, 15 per minute, 60 per hour.
 RATE_RULES = ((3.0, 1), (60.0, 15), (3600.0, 60))

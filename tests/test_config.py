@@ -19,6 +19,8 @@ class ConfigTests(unittest.TestCase):
             config = Config.load(path)
             self.assertEqual(config.nickname, "")
             self.assertEqual(config.base_url, "https://api.chuckfang.com")
+            self.assertEqual(config.html_font_size, 40)
+            self.assertTrue(config.html_wrap)
             self.assertEqual(config.path, path)
 
     def test_roundtrip_and_permissions(self) -> None:
@@ -49,6 +51,24 @@ class ConfigTests(unittest.TestCase):
             target = str(Path(tmp) / "custom.json")
             with mock.patch.dict(os.environ, {"MEOW_CONFIG": target}, clear=True):
                 self.assertEqual(default_config_path(), Path(target))
+
+    def test_html_defaults_roundtrip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            Config(
+                html_font_size=32, html_css=".meow-html-push p{margin:0}", html_wrap=False
+            ).save(path)
+            loaded = Config.load(path)
+            self.assertEqual(loaded.html_font_size, 32)
+            self.assertEqual(loaded.html_css, ".meow-html-push p{margin:0}")
+            self.assertFalse(loaded.html_wrap)
+
+    def test_invalid_font_size_raises(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            path.write_text(json.dumps({"html_font_size": 2}), encoding="utf-8")
+            with self.assertRaises(MeoWConfigError):
+                Config.load(path)
 
     def test_invalid_json_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
